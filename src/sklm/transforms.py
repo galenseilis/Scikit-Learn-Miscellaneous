@@ -10,6 +10,7 @@ import warnings
 # TODO: Decide if I want to add measurement error terms.
 # TODO: Decide if/how to deal with missing data.
 # TODO: Latent variables
+# TODO: Add preformations and  postformations as transformations before/after prediction respectively.
 class DAGModel(BaseEstimator, TransformerMixin):
     '''Directed acylic graph of predictive models.
     '''
