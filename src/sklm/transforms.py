@@ -162,41 +162,4 @@ class MultSciPyDistError(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         return X * self.dist.rvs(size=X.size)
-        
-        
-
-import numpy as np
-import pandas as pd
-import networkx as nx
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-
-# Create a synthetic dataset
-X, y = make_regression(n_samples=1000, n_features=3, noise=0.1)
-X = pd.DataFrame(X, columns=['X0', 'X1', 'X2'])
-X['y'] = y
-
-# Define a directed acyclic graph (DAG) specifying variable relationships
-dag = nx.DiGraph()
-dag.add_edge('X0', 'y')
-dag.add_edge('X1', 'y')
-dag.add_edge('X2', 'y')
-
-
-# Create a dictionary of models for each variable
-models = {
-    'y': RandomForestRegressor()
-}
-
-# Create a DAGModel and fit it to the data
-model = DAGModel(dag, models)
-model.fit(X)
-
-# Transform the data
-##transformed_data = pipeline.transform(X)
 
