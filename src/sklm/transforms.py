@@ -7,36 +7,41 @@ import networkx as nx
 import warnings
 
 
+# TODO: Decide if I want to add measurement error terms.
+# TODO: Decide if/how to deal with missing data.
+# TODO: Latent variables
 class DAGModel(BaseEstimator, TransformerMixin):
     '''Directed acylic graph of predictive models.
     '''
     
-    def __init__(self, dag, models):
+    def __init__(self, dag, models, transforms=None):
         """
         Initialize a DAGModel.
 
-        Parameters:
+        PARAMETERS
+        ----------
             dag (networkx.DiGraph): A directed acyclic graph specifying variable relationships.
             models (dict): A dictionary of Scikit-Learn models to be used for each variable.
-
+            transforms (dict): Transformations to variables.
+            
         Example models dictionary:
         models = {
-            'var1': LinearRegression(),
-            'var2': RandomForestRegressor(),
-            'var3': SVR()
+            'X0': LinearRegression(),
+            'X1': RandomForestRegressor(),
+            'X2': SVR()
         }
         """
-
-        for node in dag:
-            if not list(dag.predecessors(node)) and node in models:
-                warn_str = f'Variable {node} was assigned a model but does not have any predecessors.'
-                warnings.warn(warn_str)
+        
+        if not nx.is_directed_acyclic_graph(dag):
+            raise ValueError('DiGraph must be acyclic.')
         
         self.dag = dag
         self.models = models
 
-        # TODO: Check if any variables are assigned a model when the node for that variable in the DAG has no predecessors.
-        # TODO: Decide if I want to add measurement error terms.
+        for node in self.dag:
+            if not list(self.dag.predecessors(node)) and node in self.models:
+                warn_str = f'Variable {node} was assigned a model but does not have any predecessors.'
+                warnings.warn(warn_str)
         
         self.ordered_nodes = list(nx.topological_sort(self.dag))
         self.fitted_predictions = {}
@@ -70,6 +75,7 @@ class DAGModel(BaseEstimator, TransformerMixin):
 
                 # Fit model
                 self.models[node].fit(input_data, X[node])
+                
 
                 # Store predictions
                 self.fitted_predictions[node] = self.models[node].predict(input_data)
@@ -90,7 +96,7 @@ class DAGModel(BaseEstimator, TransformerMixin):
 
         transformed_data = {}
         for node in self.ordered_nodes:
-            if node in models:
+            if node in self.models:
                 input_nodes = list(self.dag.predecessors(node))
                 if input_nodes:
                     input_data = np.column_stack(
@@ -107,12 +113,27 @@ class DAGModel(BaseEstimator, TransformerMixin):
     def predict(self, X):
         return self.transform(X)
 
+    def do(self, query):
+        '''Compute a do-calculus query.
 
-class AddSciPyDistError(BaseEstimator, TransformerMixin):
+        PARAMETERS
+        ----------
+        query:
+            Causal query
+
+        RETURNS
+        -------
+        DAGModel:
+            Modified model for query.
+        '''
+        raise NotImplementedError('Do-calculus not implemented yet.')
+
+
+class AdditiveSciPyDistError(BaseEstimator, TransformerMixin):
+    '''Additive observation error using SciPy distribution.'''
 
     def __init__(self, dist):
-        '''Additive observation error using SciPy distribution.
-
+        '''
         PARAMETERS
         ----------
         dist: scipy.stats.rv_<any>
@@ -133,11 +154,11 @@ class AddSciPyDistError(BaseEstimator, TransformerMixin):
     def transform(self, X):
         return X + self.dist.rvs(size=X.size)
         
-class MultSciPyDistError(BaseEstimator, TransformerMixin):
+class MultiplicativeSciPyDistError(BaseEstimator, TransformerMixin):
+    '''Multiplicative observation error using SciPy distribution.'''
 
     def __init__(self, dist):
-        '''Multiplicative observation error using SciPy distribution.
-
+        '''
         PARAMETERS
         ----------
         dist: scipy.stats.rv_<any>
@@ -152,10 +173,10 @@ class MultSciPyDistError(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y):
 
-        # Compute residuals
+        # Compute quotient
         quotient = y / X
 
-        # Fit distribuion on errors
+        # Fit distribuion on quotients
         self.dist.fit(quotient)
         
         return self
@@ -163,3 +184,28 @@ class MultSciPyDistError(BaseEstimator, TransformerMixin):
     def transform(self, X):
         return X * self.dist.rvs(size=X.size)
 
+class StatsmodelsAPI(BaseEstimator):
+    '''Wrapper around Statsmodels API.'''
+
+    def __init__(self, sm_model, sm_params=None):
+        '''
+        PARAMETERS
+        ----------
+        sm_model:
+            statsmodels model class.
+        sm_params:
+            Parameters for SM model.
+        '''
+        self.sm_model = sm_model
+        self.sm_params = sm_params
+
+    def fit(self, X, y):
+        if sm_params is None:
+            self._model = sm_model(y, X)
+        else:
+            self._model = sm_model(y, X, **sm_params)
+
+        self.model_results = self._model.fit()
+
+    def predict(self, X):
+        return self.model_results.predict(X)
