@@ -128,6 +128,13 @@ class DAGModel(BaseEstimator, TransformerMixin):
         '''
         raise NotImplementedError('Do-calculus not implemented yet.')
 
+    def export_graphviz(self):
+        '''Export to graphviz.'''
+        raise NotImplementedError('Graphviz export not implemented yet.')
+        gdag = graphviz.Digraph()
+        for node in self.ordered_nodes:
+            ...
+
 
 class AdditiveSciPyDistError(BaseEstimator, TransformerMixin):
     '''Additive observation error using SciPy distribution.'''
