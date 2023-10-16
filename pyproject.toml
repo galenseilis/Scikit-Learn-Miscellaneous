@@ -1,14 +1,14 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "Scikit-Learn Miscellaneous"
+name = "SKLMisc"
 version = "0.0.1"
 authors = [
   { name="Galen Seilis", email="galen.seilis@seilis.ca" },
 ]
-description = "A small example package"
+description = "Miscellaneous code associated with SKLearn."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
