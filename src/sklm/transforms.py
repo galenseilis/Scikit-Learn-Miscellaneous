@@ -6,6 +6,7 @@ import networkx as nx
 
 import warnings
 
+# TODO: Implement Markov misclassification class for classifiers.
 
 # TODO: Decide if I want to add measurement error terms.
 # TODO: Decide if/how to deal with missing data.
@@ -211,7 +212,7 @@ class StatsmodelsAPI(BaseEstimator):
         if sm_params is None:
             self._model = sm_model(y, X)
         else:
-            self._model = sm_model(y, X, **sm_params)
+            self._model = sm_model(y, X, **self.sm_params)
 
         self.model_results = self._model.fit()
 
