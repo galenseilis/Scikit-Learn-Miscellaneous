@@ -1,3 +1,4 @@
+import graphviz
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.naive_bayes import MultinomialNB
@@ -16,7 +17,7 @@ class DAGModel(BaseEstimator, TransformerMixin):
     '''Directed acylic graph of predictive models.
     '''
     
-    def __init__(self, dag, models, transforms=None):
+    def __init__(self, dag, models, transforms=None, verbose=False):
         """
         Initialize a DAGModel.
 
@@ -33,6 +34,8 @@ class DAGModel(BaseEstimator, TransformerMixin):
             'X2': SVR()
         }
         """
+
+        self.verbose = verbose
         
         if not nx.is_directed_acyclic_graph(dag):
             raise ValueError('DiGraph must be acyclic.')
@@ -64,8 +67,11 @@ class DAGModel(BaseEstimator, TransformerMixin):
             # Get the input nodes for this variable
             input_nodes = list(self.dag.predecessors(node))
 
+            if self.verbose and input_nodes:
+                print(f'Fitting {node} as a function of {input_nodes}.')
+
             if input_nodes:
-                
+                input_nodes = sorted(set(self.ordered_nodes) & set(input_nodes), key = self.ordered_nodes.index)
                 # Collect predictors from input data and earlier predictions in DAG.
                 input_data = np.column_stack(
                     [
@@ -101,6 +107,7 @@ class DAGModel(BaseEstimator, TransformerMixin):
             if node in self.models:
                 input_nodes = list(self.dag.predecessors(node))
                 if input_nodes:
+                    input_nodes = sorted(set(self.ordered_nodes) & set(input_nodes), key = self.ordered_nodes.index)
                     input_data = np.column_stack(
                     [
                         transformed_data[in_node] if in_node in transformed_data
@@ -132,10 +139,14 @@ class DAGModel(BaseEstimator, TransformerMixin):
 
     def export_graphviz(self):
         '''Export to graphviz.'''
-        raise NotImplementedError('Graphviz export not implemented yet.')
-        gdag = graphviz.Digraph()
+        dot = graphviz.Digraph()
         for node in self.ordered_nodes:
-            ...
+            dot.node(node, shape='rectangle')
+
+        for edge in self.dag.edges():
+            dot.edge(*edge)
+
+        return dot
 
 
 class AdditiveSciPyDistError(BaseEstimator, TransformerMixin):
