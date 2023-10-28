@@ -71,14 +71,30 @@ class Mjolnir(transforms.DAGModel):
 
         # TODO: Handle MAPIE regression instances
 
+    def derivative(self, method='analytic'):
+        raise NotImplementedError
+
+        if method == 'analytic':
+            ...
+        elif method == 'spectral':
+            # https://www.youtube.com/watch?v=reievpVoSsY
+            # https://www.youtube.com/watch?v=SBYQ3bprKy0
+            ...
+        else:
+            raise NotImplementedError(f'Method {method} is not supported. Only available methods are "analytic" and "spectral."')
+
+
     def gradient(self):
-        ...
+        raise NotImplementedError
+
+    def divergence(self):
+        raise NotImplementedError
 
     def jacobian(self):
-        ...
+        raise NotImplementedError
 
     def hessian(self):
-        ...
+        raise NotImplementedError
 
     def inv(self, X):
         '''Compute inverse using the Jacobian.
@@ -92,7 +108,7 @@ class Mjolnir(transforms.DAGModel):
 
     def pinv(self, X):
         '''Compute Moore-Penrose pseudoinverse using the Jacobian.'''
-        ...
+        raise NotImplementedError
 
     def fit_approx_inverse(self, X):
         '''Fit a Mjolnir model on the reverse DAG.
